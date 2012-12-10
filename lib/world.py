@@ -23,6 +23,12 @@ class World:
                 
                 if color == (0, 0, 0, 255):
                     Ground((self.x*32, self.y*32))
+            
+                if color == (127, 0, 55, 255):
+                    Bush((self.x*32, self.y*32))
+
+                if color == (87, 0, 127, 255):
+                    Cloud((self.x*32, self.y*32))
     
     def color_at(self, dx, dy):
         try:

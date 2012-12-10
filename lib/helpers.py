@@ -20,3 +20,21 @@ def load_image(filename):
         raise SystemExit, "Unable to load: " + filename
     return image.convert_alpha()
 
+def play_music(filename, volume=0.5, loop=-1):
+    filename = filepath(filename)
+    try:
+        pygame.mixer.music.load(filename)
+        pygame.mixer.music.set_volume(volume)
+        pygame.mixer.music.play(loop)
+    except:
+        raise SystemExit, "Unable to load: " + filename
+
+def load_sound(filename, volume=0.5):
+    filename = filepath(filename)
+    try:
+        sound = pygame.mixer.Sound(filename)
+        sound.set_volume(volume)
+    except:
+        raise SystemExit, "Unable to load: " + filename
+    return sound
+

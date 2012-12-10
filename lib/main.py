@@ -12,11 +12,8 @@ def main():
     pygame.init()
     
     pygame.mouse.set_visible(0)
-    
-    width = 640
-    height = 480
 
-    screen = pygame.display.set_mode((width, height))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Super Duper Mario")
     
     SuperMario(screen).start()
