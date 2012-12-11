@@ -57,6 +57,18 @@ class World:
 
                 if color == (109, 127, 63, 255):
                     Ground((self.x * SCALE, self.y * SCALE), "brick")
+
+                if color == (255, 233, 127, 255):
+                    GrassHill((self.x * SCALE, self.y * 29))
+
+                if color == (0, 127, 70, 255):
+                    LifeMushroom((self.x * SCALE, self.y * SCALE))
+                
+                if color == (80, 63, 127, 255):
+                    Castle((self.x * SCALE, self.y * 22))
+
+                if color == (0, 255, 0, 255):
+                    Flagpole((self.x * SCALE , self.y * 10))
  
     def color_at(self, dx, dy):
         try:

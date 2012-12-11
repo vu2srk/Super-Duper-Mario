@@ -235,3 +235,27 @@ class VenusFlytrap(Components):
             self.speed = -1
         
         self.move(0, self.speed)
+
+class GrassHill(Components):
+    def __init__(self, pos):
+        Components.__init__(self, self.groups)
+        self.image = load_image("grass-hill.png")
+        self.rect = self.image.get_rect(topleft = pos)
+
+class LifeMushroom(Components):
+    def __init__(self, pos):
+        Components.__init__(self, self.groups)
+        self.image = load_image("life-mushroom.png")
+        self.rect = self.image.get_rect(topleft = pos)
+
+class Castle(Components):
+    def __init__(self, pos):
+        Components.__init__(self, self.groups)
+        self.image = load_image("castle.png")
+        self.rect = self.image.get_rect(topleft = pos)
+
+class Flagpole(Components):
+    def __init__(self, pos):
+        Components.__init__(self, self.groups)
+        self.image = load_image("flag.png")
+        self.rect = self.image.get_rect(topleft = pos)
