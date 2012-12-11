@@ -10,6 +10,8 @@ from world import *
 WIDTH = 640
 HEIGHT = 480
 LOOK_AHEAD = 64
+VITALS_COLOR = (255, 255, 255)
+MARGIN = 20
 
 def RelRect(actor, camera):
     return Rect(actor.rect.x-camera.rect.x, actor.rect.y-camera.rect.y, actor.rect.w, actor.rect.h)
@@ -79,6 +81,8 @@ class SuperMario:
         self.music = "maintheme.ogg"
 
         self.scene_bg = load_image("background.png")
+        self.lives_images = [load_image("mario1.png"), load_image("last-life.png")]
+
         play_music(self.music)
         self.start()
 
@@ -119,6 +123,7 @@ class SuperMario:
             self.screen.blit(self.scene_bg, (self.modWidth(camera_x) + WIDTH, 0))
             self.screen.blit(self.scene_bg, (self.modWidth(camera_x) - WIDTH, 0))
             self.camera.draw_sprites(self.screen, self.sprites)
+            self.draw_vitals()
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -126,4 +131,14 @@ class SuperMario:
     def modWidth(self, camera_x):
         return -camera_x % WIDTH
 
+    def draw_vitals(self):
+        if self.player.lives == 0:
+            lives_image = self.lives_images[1]
+        else:
+            lives_image = self.lives_images[0]
+        self.screen.blit(lives_image, (5, 10))
+        ren = self.font.render("x%d" % self.player.lives, 1, VITALS_COLOR)
+        self.screen.blit(ren, (lives_image.get_width() + MARGIN, MARGIN))
 
+        ren = self.font.render("Coins: %03d" % self.player.coins, 1, VITALS_COLOR)
+        self.screen.blit(ren, (WIDTH - (ren.get_width() + MARGIN), MARGIN))

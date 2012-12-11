@@ -87,6 +87,9 @@ class Mario(Components):
         self.accel = 0.3
         self.frame = 0
 
+        self.coins = 0
+        self.lives = 1
+
         self.alive = True
 
         self.jump_sound = load_sound("jump.ogg")
@@ -166,8 +169,13 @@ class Mario(Components):
 
     def die(self):
         self.alive = False
+        self.lives -= 1
+        if self.lives == 0:
+            self.lives = 0
+
         self.image = self.die_images[0]
-        self.die_image = 1 
+        self.die_image = 1
+
         pygame.mixer.music.stop()
         self.mario_funeral_music.play()
 
@@ -212,6 +220,7 @@ class Coin(Components):
 
     def on_collision(self, player, side):
         self.sound.play()
+        player.coins += 1
         self.kill()
 
     def disappear(self):
