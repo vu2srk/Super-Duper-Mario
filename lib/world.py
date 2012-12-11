@@ -4,6 +4,9 @@ from pygame.locals import *
 from helpers import *
 from components import *
 
+SCALE = 32
+DISPLACE = 8
+
 class World:
 
     def __init__(self, level = 1):
@@ -22,14 +25,39 @@ class World:
                 color = self.world.get_at((self.x, self.y))
                 
                 if color == (0, 0, 0, 255):
-                    Ground((self.x*32, self.y*32))
+                    Ground((self.x * SCALE, self.y * SCALE))
             
                 if color == (127, 0, 55, 255):
-                    Bush((self.x*32, self.y*32))
+                    Bush((self.x * SCALE, self.y * SCALE))
 
                 if color == (87, 0, 127, 255):
-                    Cloud((self.x*32, self.y*32))
-    
+                   Cloud((self.x * SCALE, self.y * SCALE))
+
+                if color == (91, 127, 0, 255):
+                    VenusFlytrap((self.x * SCALE + (DISPLACE * 2), self.y * 28))
+                    Pipe((self.x * SCALE, self.y * 28))
+
+                if color == (178, 0, 255, 255):
+                    big = True
+                    Pipe((self.x * SCALE, self.y * 25), big)
+                
+                if color == (255, 200, 0, 255):
+                    p_type = "air"
+                    Ground((self.x * SCALE, self.y * SCALE), p_type)
+
+                if color == (0, 74, 127, 255):
+                    p_type = "brick"
+                    Ground((self.x * SCALE, self.y * SCALE), p_type)
+
+                if color == (127, 51, 0, 255):
+                    QuestionMark((self.x * SCALE, self.y * SCALE))
+
+                if color == (255, 255, 0, 255):
+                    Coin((self.x * SCALE + DISPLACE, self.y * SCALE))
+
+                if color == (109, 127, 63, 255):
+                    Ground((self.x * SCALE, self.y * SCALE), "brick")
+ 
     def color_at(self, dx, dy):
         try:
             return self.world.get_at((self.x+dx, self.y+dy))
@@ -37,5 +65,5 @@ class World:
             pass
 
     def get_size(self):
-        return [self.world.get_size()[0]*32, self.world.get_size()[1]*32]
+        return [self.world.get_size()[0] * SCALE, self.world.get_size()[1] * SCALE]
         

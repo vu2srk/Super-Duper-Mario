@@ -63,6 +63,10 @@ class SuperMario:
         Ground.groups = self.sprites, self.ground_group
         Bush.groups = self.sprites
         Cloud.groups = self.sprites, self.cloud_group
+        Pipe.groups = self.sprites, self.ground_group
+        QuestionMark.groups = self.sprites, self.ground_group
+        Coin.groups = self.sprites, self.coin_group
+        VenusFlytrap.groups = self.sprites, self.flytrap_group
 
         self.world = World()
         self.player = Mario((0,0))
@@ -80,6 +84,8 @@ class SuperMario:
         self.player_group = pygame.sprite.OrderedUpdates()
         self.ground_group = pygame.sprite.OrderedUpdates()
         self.cloud_group = pygame.sprite.OrderedUpdates()
+        self.coin_group = pygame.sprite.OrderedUpdates()
+        self.flytrap_group = pygame.sprite.OrderedUpdates()
         
     
     def start(self):

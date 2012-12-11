@@ -1,26 +1,33 @@
-import pygame, random, math
+import pygame
+from random import randint
 from pygame.locals import *
 
 from helpers import *
 
-TOP_SIDE    = 0
-BOTTOM_SIDE = 2
-LEFT_SIDE   = 3
-RIGHT_SIDE  = 1
+FORWARD = 1
+BACKWARD = -1
 
-def speed_to_side(dx,dy):
+FLYTRAP_TOP = 310
+FLYTRAP_BOTTOM = 370
+
+TOP    = 0
+RIGHT  = 1
+BOTTOM = 2
+LEFT = 3
+
+def which_side(dx,dy):
     if abs(dx) > abs(dy):
         dy = 0
     else:
         dx = 0
     if dy < 0:
-        return TOP_SIDE
+        return TOP
     elif dx > 0:
-        return RIGHT_SIDE
+        return RIGHT
     elif dy > 0:
-        return BOTTOM_SIDE
+        return BOTTOM
     elif dx < 0:
-        return LEFT_SIDE
+        return LEFT
     else:
         return 0, 0
 
@@ -29,51 +36,35 @@ class Components(pygame.sprite.Sprite):
     def __init__(self, *groups):
         pygame.sprite.Sprite.__init__(self, groups)
         self.collision_groups = []
-        self.xoffset = 0
-        self.yoffset = 0
 
     def collidesWith(self, group):
         if group not in self.collision_groups:
             self.collision_groups.append(group)
 
-    def move(self, dx, dy, collide=True):
-        if collide:
-            if dx!=0:
-                dx, dummy = self.__move(dx,0)
-            if dy!=0:
-                dummy, dy = self.__move(0,dy)
-        else:
-            self.rect.move_ip(dx, dy)
-        return dx, dy
+    def move(self, dx, dy):
+        if dx!=0:
+            self.__move(dx,0)
+        if dy!=0:
+            self.__move(0,dy)
 
-    def clamp_off(self, sprite, side):
-        if side == TOP_SIDE:
-            self.rect.top = sprite.rect.bottom
-        if side == RIGHT_SIDE:
-            self.rect.right = sprite.rect.left
-        if side == BOTTOM_SIDE:
-            self.rect.bottom = sprite.rect.top
-        if side == LEFT_SIDE:
-            self.rect.left = sprite.rect.right
-
-    def __move(self,dx,dy):
-        oldr = self.rect
-        self.rect.move_ip(dx, dy)        
-
-        side = speed_to_side(dx, dy)
-        
-        for group in self.collision_groups:
-            for sprite in group:
+    def __move(self, dx, dy):
+        self.rect.move_ip(dx, dy)
+    
+        for sprite_group in self.collision_groups:
+            for sprite in sprite_group:
                 if sprite.rect.colliderect(self.rect):
-                    self.on_collision(side, sprite, group)
+                    collided_side = which_side(dx, dy)
+                    self.on_collision(collided_side, sprite)
 
-        return self.rect.left-oldr.left,self.rect.top-oldr.top
-
-    def on_collision(self, side, sprite, group):
-        self.clamp_off(sprite, side)
-
-    def draw(self, surf):
-        surf.blit(self.image, (self.rect[0]+self.xoffset, self.rect[1]+self.yoffset))
+    def dealWithCollision(self, sprite, side):
+        if side == TOP:
+            self.rect.top = sprite.rect.bottom
+        if side == RIGHT:
+            self.rect.right = sprite.rect.left
+        if side == BOTTOM:
+            self.rect.bottom = sprite.rect.top
+        if side == LEFT:
+            self.rect.left = sprite.rect.right
 
 class Mario(Components):
     
@@ -81,108 +72,111 @@ class Mario(Components):
         Components.__init__(self, self.groups)
         self.forward_images = [load_image("mario1.png"), load_image("mario2.png"), load_image("mario3.png"), load_image("mario4.png"), load_image("mario1.png"), load_image("mario5.png")]
         self.backward_images = [pygame.transform.flip(image, 1, 0) for image in self.forward_images]
+        self.jumping_images = [self.forward_images[5], self.backward_images[5]]
         self.image = self.forward_images[0]
         self.rect = self.image.get_rect(topleft = pos)
 
+        self.direction = FORWARD
+        self.is_jumping = False
         self.jump_speed = 0
-        self.jump_accel = 0.3
-        self.jumping = False
+        self.accel = 0.3
         self.frame = 0
-        self.facing = 1
-        self.angle = 0
-        self.dying = False
-        self.shooting = False
-        self.shoot_timer = 0
-        self.still_timer = 0
-        self.hp = 1
-        self.hit_timer = 0
-        self.springing = False
 
         self.jump_sound = load_sound("jump.ogg")
 
-    def on_collision(self, side, sprite, group):
-        self.clamp_off(sprite, side)
-        if side == TOP_SIDE:
+    def on_collision(self, side, sprite):
+        self.dealWithCollision(sprite, side)
+        if side == TOP:
             self.jump_speed = 0
-        if side == BOTTOM_SIDE:
+        if side == BOTTOM:
             self.jump_speed = 0
-            self.jumping = False
-            self.springing = False
+            self.is_jumping = False
 
     def jump(self):
-        if not self.jumping and not self.shooting and self.still_timer <= 0:
+        if not self.is_jumping:
             self.jump_speed = -9.4
-            self.jumping = True
-            self.move(0, -4)
+            self.is_jumping = True
             self.jump_sound.play() 
 
     def update(self):
-        self.frame += 1 
-        self.still_timer -= 1
-        self.hit_timer -= 1
+        dy = 0
         dx = 0
+
+        if self.is_jumping == False:
+            if self.direction == FORWARD:
+                self.image = self.forward_images[0]
+            else:
+                self.image = self.backward_images[0]
+    
+        self.frame += 1
         key = pygame.key.get_pressed()
 
-        if key[K_z]:
-            if not self.springing:
-                self.jump_accel = 0.3
+        if key[K_LEFT]:
+            self.direction = BACKWARD
+            self.image = self.backward_images[self.frame/6 % 5]
+            dx = self.direction
+        if key[K_RIGHT]:
+            self.direction = FORWARD
+            self.image = self.forward_images[self.frame/6 % 5]
+            dx = self.direction
+
+        jump = key[K_UP]
+
+        if jump:
+            self.accel = 0.3
+            if self.direction == FORWARD:
+                self.image = self.jumping_images[0]
             else:
-                self.jump_accel = 0.6
+                self.image = self.jumping_images[1]
             self.jump()
 
         if self.jump_speed < 8:
-            self.jump_speed += self.jump_accel
+            self.jump_speed += self.accel
         if self.jump_speed > 3:
-            self.jumping = True
-
-        if self.shooting:
-            self.shoot_timer -= 1
-            id = self.shoot_timer/5
-            if self.shoot_timer % 5 == 0 and id != 0:
-                self.string = Stringer(self.rect.center, self.facing, id, self)
-            if self.shoot_timer <= 0:
-                self.shooting = False
-        else:
-            if self.still_timer <= 0:
-                if key[K_LEFT]:
-                    dx = -1
-                    self.facing = dx
-                if key[K_RIGHT]:
-                    dx = 1
-                    self.facing = dx
-
-        if self.facing > 0:
-            self.image = self.forward_images[0]
-        if self.facing < 0:
-            self.image = self.backward_images[0]
-        if dx > 0:
-            self.image = self.forward_images[self.frame/6%5]
-        if dx < 0:
-            self.image = self.backward_images[self.frame/6%5]
-        if self.facing > 0 and self.jumping:
-            self.image = self.forward_images[5]
-        if self.facing < 0 and self.jumping:
-            self.image = self.backward_images[5]
-        if self.hit_timer > 0:
-            if not self.frame % 2:
-                if self.facing > 0:
-                    self.image = self.forward_images[2]
-                if self.facing < 0:
-                    self.image = self.backward_images[2]
+            self.is_jumping = True
 
         if self.rect.left < 0:
             self.rect.left = 0
-        if self.rect.top >= 475:
-            pygame.sprite.Sprite.kill(self)
 
         self.move(3*dx, self.jump_speed)
 
 class Ground(Components):
     
+    def __init__(self, pos, p_type="ground"):
+        Components.__init__(self, self.groups)
+        if p_type == "air":
+            self.image = load_image("platform-air.png")
+        elif p_type == "brick":
+            self.image = load_image("platform-brick.png")
+        else:
+            self.image = load_image("platform.png")
+        self.rect = self.image.get_rect(topleft = pos)
+
+class QuestionMark(Components):
+    def __init__(self, pos, p_type="ground"):
+        Components.__init__(self, self.groups)
+        self.images = [load_image("platform-q%d.png" % i) for i in range(0, 3)]
+        self.image = self.images[0]
+        self.rect = self.image.get_rect(topleft=pos)
+        self.frame = 0
+
+    def update(self):
+        self.frame += 1
+        if self.frame % 8 == 0:
+            self.image = self.images[self.frame/4 % 3]
+
+class Coin(Components):
     def __init__(self, pos):
         Components.__init__(self, self.groups)
-        self.image = load_image("platform.png")
-        self.rect = self.image.get_rect(topleft = pos)
+        self.images = [load_image("coin%d.png" % i) for i in range(1, 4)]
+        self.image = self.images[0]
+        self.rect = self.image.get_rect(topleft=pos)
+        self.frame  = 0
+
+    def update(self):
+        self.frame += 1
+        if self.frame % 8 == 0:
+            self.image = self.images[self.frame/4 % 3]
 
 class Bush(Components):
 
@@ -196,18 +190,48 @@ class Cloud(Components):
         Components.__init__(self, self.groups)
         self.image = load_image("cloud.png")
         self.rect = self.image.get_rect(topleft = pos)
-        self.oldy = self.rect.centerx
-        self.speed = -00.1
-     def on_collision(self, side, sprite, group):
-         if side == TOP_SIDE:
-             sprite.rect.right = self.rect.left
-             sprite.jump_speed = 1
-         if side == BOTTOM_SIDE:
-             sprite.rect.right = self.rect.left
-     def update(self):
-        if self.rect.centerx & self.oldy+64:
-            self.speed = -self.speed
-        if self.rect.centerx & self.oldy-64:
-            self.speed = -self.speed
-        self.move(-1, self.speed)
 
+     def update(self):
+        self.move(-1, 0)
+
+class Pipe(Components):
+    def __init__(self, pos, big = False):
+        Components.__init__(self, self.groups)
+        if big:
+            self.image = load_image("pipe-big.png")
+        else:
+            self.image = load_image("pipe.png")
+        self.rect = self.image.get_rect(topleft = pos)
+
+class VenusFlytrap(Components):
+    def __init__(self, pos):
+        Components.__init__(self, self.groups)
+        self.images = [load_image("flytrap.png"), load_image("flytrap_open.png")]
+        self.image = self.images[0]
+        self.rect = self.image.get_rect(topleft = pos)
+        self.is_open = False
+        self.speed = -1
+        self.frame = 0
+
+    def update(self):
+        self.frame += 1
+        if self.frame % 15 == 0:
+            if self.is_open:
+                self.image = self.images[0]
+                self.is_open = False
+            else:
+                self.image = self.images[1]
+                self.is_open = True
+
+        if self.rect.centery <= FLYTRAP_TOP:
+            self.speed = 1
+
+        if self.rect.centery >= FLYTRAP_BOTTOM:
+            self.speed = 0
+
+        flytrap_pop_random = randint(50, 100)
+
+        if self.speed == 0 and self.frame % flytrap_pop_random == 0:
+            self.speed = -1
+        
+        self.move(0, self.speed)
