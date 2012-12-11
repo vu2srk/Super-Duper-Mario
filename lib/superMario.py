@@ -103,6 +103,8 @@ class SuperMario:
             
             #tell the component that it collides with everything in ground_group
             self.player.collidesWith(self.ground_group)
+            self.player.collidesWith(self.coin_group)
+            self.player.collidesWith(self.flytrap_group)
 
             for event in pygame.event.get():
 

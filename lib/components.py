@@ -54,7 +54,10 @@ class Components(pygame.sprite.Sprite):
             for sprite in sprite_group:
                 if sprite.rect.colliderect(self.rect):
                     collided_side = which_side(dx, dy)
-                    self.on_collision(collided_side, sprite)
+                    self.on_collision(sprite, collided_side)
+
+    def on_collision(self, sprite, side):
+        pass
 
     def dealWithCollision(self, sprite, side):
         if side == TOP:
@@ -73,6 +76,8 @@ class Mario(Components):
         self.forward_images = [load_image("mario1.png"), load_image("mario2.png"), load_image("mario3.png"), load_image("mario4.png"), load_image("mario1.png"), load_image("mario5.png")]
         self.backward_images = [pygame.transform.flip(image, 1, 0) for image in self.forward_images]
         self.jumping_images = [self.forward_images[5], self.backward_images[5]]
+        self.die_images = [load_image("mariodie-%d.png" % i) for i in range(0, 4)]
+        self.die_image = 0
         self.image = self.forward_images[0]
         self.rect = self.image.get_rect(topleft = pos)
 
@@ -82,10 +87,14 @@ class Mario(Components):
         self.accel = 0.3
         self.frame = 0
 
-        self.jump_sound = load_sound("jump.ogg")
+        self.alive = True
 
-    def on_collision(self, side, sprite):
+        self.jump_sound = load_sound("jump.ogg")
+        self.mario_funeral_music = load_sound("death.ogg")
+
+    def on_collision(self, sprite, side):
         self.dealWithCollision(sprite, side)
+        sprite.on_collision(self, side)
         if side == TOP:
             self.jump_speed = 0
         if side == BOTTOM:
@@ -99,6 +108,18 @@ class Mario(Components):
             self.jump_sound.play() 
 
     def update(self):
+        self.frame += 1
+
+        if not self.alive:
+            if self.die_image == 4:
+                self.kill()
+
+            if self.frame % 20 == 0:
+                self.image = self.die_images[self.die_image]
+                self.die_image += 1
+
+            return
+         
         dy = 0
         dx = 0
 
@@ -108,7 +129,6 @@ class Mario(Components):
             else:
                 self.image = self.backward_images[0]
     
-        self.frame += 1
         key = pygame.key.get_pressed()
 
         if key[K_LEFT]:
@@ -137,8 +157,19 @@ class Mario(Components):
 
         if self.rect.left < 0:
             self.rect.left = 0
+        
+        # die if mario falls into one of the pits
+        if self.rect.centery > 475:
+            self.die()
 
         self.move(3*dx, self.jump_speed)
+
+    def die(self):
+        self.alive = False
+        self.image = self.die_images[0]
+        self.die_image = 1 
+        pygame.mixer.music.stop()
+        self.mario_funeral_music.play()
 
 class Ground(Components):
     
@@ -155,7 +186,7 @@ class Ground(Components):
 class QuestionMark(Components):
     def __init__(self, pos, p_type="ground"):
         Components.__init__(self, self.groups)
-        self.images = [load_image("platform-q%d.png" % i) for i in range(0, 3)]
+        self.images = [load_image("platform-q%d.png" % i) for i in range(0, 4)]
         self.image = self.images[0]
         self.rect = self.image.get_rect(topleft=pos)
         self.frame = 0
@@ -168,15 +199,23 @@ class QuestionMark(Components):
 class Coin(Components):
     def __init__(self, pos):
         Components.__init__(self, self.groups)
-        self.images = [load_image("coin%d.png" % i) for i in range(1, 4)]
+        self.images = [load_image("coin%d.png" % i) for i in range(1, 5)]
         self.image = self.images[0]
         self.rect = self.image.get_rect(topleft=pos)
         self.frame  = 0
+        self.sound = load_sound("coin.ogg")
 
     def update(self):
         self.frame += 1
         if self.frame % 8 == 0:
             self.image = self.images[self.frame/4 % 3]
+
+    def on_collision(self, player, side):
+        self.sound.play()
+        self.kill()
+
+    def disappear(self):
+        self.kill()
 
 class Bush(Components):
 
@@ -203,9 +242,16 @@ class Pipe(Components):
             self.image = load_image("pipe.png")
         self.rect = self.image.get_rect(topleft = pos)
 
-class VenusFlytrap(Components):
+class Enemies(Components):
+    def __init__(self, groups):
+        Components.__init__(self, groups)
+
+    def on_collision(self, player, side):
+        player.die()
+
+class VenusFlytrap(Enemies):
     def __init__(self, pos):
-        Components.__init__(self, self.groups)
+        Enemies.__init__(self, self.groups)
         self.images = [load_image("flytrap.png"), load_image("flytrap_open.png")]
         self.image = self.images[0]
         self.rect = self.image.get_rect(topleft = pos)
