@@ -69,6 +69,9 @@ class World:
 
                 if color == (0, 255, 0, 255):
                     Flagpole((self.x * SCALE , self.y * 10))
+
+                if color == (0, 255, 255, 255):
+                    BadMushroom((self.x * SCALE, self.y * SCALE))
  
     def color_at(self, dx, dy):
         try:

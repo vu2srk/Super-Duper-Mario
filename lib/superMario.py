@@ -65,7 +65,7 @@ class SuperMario:
         Ground.groups = self.sprites, self.ground_group
         Bush.groups = self.sprites
         Cloud.groups = self.sprites, self.cloud_group
-        Pipe.groups = self.sprites, self.ground_group
+        Pipe.groups = self.sprites, self.ground_group, self.pipe_group
         QuestionMark.groups = self.sprites, self.ground_group
         Coin.groups = self.sprites, self.coin_group
         VenusFlytrap.groups = self.sprites, self.flytrap_group
@@ -73,6 +73,7 @@ class SuperMario:
         LifeMushroom.groups = self.sprites, self.mushroom_group
         Castle.groups = self.sprites
         Flagpole.groups = self.sprites, self.flag_group
+        BadMushroom.groups = self.sprites, self.bad_guys_group
 
         self.world = World()
         self.player = Mario((0,0))
@@ -84,6 +85,17 @@ class SuperMario:
         self.lives_images = [load_image("mario1.png"), load_image("last-life.png")]
 
         play_music(self.music)
+
+        for sprite in self.bad_guys_group:
+            sprite.collides_with(self.pipe_group)
+            sprite.collides_with(self.player_group)
+
+        #tell the component that it collides with everything in ground_group
+        self.player.collides_with(self.ground_group)
+        self.player.collides_with(self.coin_group)
+        self.player.collides_with(self.bad_guys_group)
+        self.player.collides_with(self.flytrap_group)     
+
         self.start()
 
     def initGroups(self):
@@ -91,11 +103,13 @@ class SuperMario:
         self.sprites = pygame.sprite.OrderedUpdates()
         self.player_group = pygame.sprite.OrderedUpdates()
         self.ground_group = pygame.sprite.OrderedUpdates()
+        self.pipe_group = pygame.sprite.OrderedUpdates()
         self.cloud_group = pygame.sprite.OrderedUpdates()
         self.coin_group = pygame.sprite.OrderedUpdates()
-        self.flytrap_group = pygame.sprite.OrderedUpdates()
         self.mushroom_group = pygame.sprite.OrderedUpdates()
         self.flag_group = pygame.sprite.OrderedUpdates()
+        self.flytrap_group = pygame.sprite.OrderedUpdates()
+        self.bad_guys_group = pygame.sprite.OrderedUpdates()
     
     def start(self):
         while not self.quit:
@@ -103,12 +117,7 @@ class SuperMario:
             self.camera.update()
             
             for sprite in self.sprites:
-                sprite.update()
-            
-            #tell the component that it collides with everything in ground_group
-            self.player.collidesWith(self.ground_group)
-            self.player.collidesWith(self.coin_group)
-            self.player.collidesWith(self.flytrap_group)
+                sprite.update() 
 
             for event in pygame.event.get():
 

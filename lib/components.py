@@ -37,7 +37,7 @@ class Components(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, groups)
         self.collision_groups = []
 
-    def collidesWith(self, group):
+    def collides_with(self, group):
         if group not in self.collision_groups:
             self.collision_groups.append(group)
 
@@ -59,7 +59,7 @@ class Components(pygame.sprite.Sprite):
     def on_collision(self, sprite, side):
         pass
 
-    def dealWithCollision(self, sprite, side):
+    def deal_with_collision(self, sprite, side):
         if side == TOP:
             self.rect.top = sprite.rect.bottom
         if side == RIGHT:
@@ -96,13 +96,14 @@ class Mario(Components):
         self.mario_funeral_music = load_sound("death.ogg")
 
     def on_collision(self, sprite, side):
-        self.dealWithCollision(sprite, side)
+        self.deal_with_collision(sprite, side)
         sprite.on_collision(self, side)
         if side == TOP:
             self.jump_speed = 0
         if side == BOTTOM:
             self.jump_speed = 0
             self.is_jumping = False
+            
 
     def jump(self):
         if not self.is_jumping:
@@ -254,9 +255,63 @@ class Pipe(Components):
 class Enemies(Components):
     def __init__(self, groups):
         Components.__init__(self, groups)
+        self.frame = 1
+        self.speed = -1
+        self.alive = True
+
+        self.die_sound = load_sound("jump_on.ogg")
 
     def on_collision(self, player, side):
         player.die()
+
+    def die(self):
+        self.kill()
+
+class BadMushroom(Enemies):
+    def __init__(self, pos):
+        Enemies.__init__(self, self.groups)
+        self.images = [load_image("slub%d.png" % i) for i in range(1, 3)]
+        self.die_images = [load_image("slub3.png"), load_image("slub2.png")]
+        # move_side indicates which bad mushroom image to display -- purpose of animation
+        self.move_side = 0
+        self.image = self.images[self.move_side]
+        self.rect = self.image.get_rect(topleft = pos)
+
+    def die(self):
+        self.die_sound.play()
+        self.alive = False
+        self.image = self.die_images[0]
+        self.move_side = 0
+
+    def on_collision(self, obj, side):
+        if isinstance(obj, Mario):
+            if side != BOTTOM and side != TOP:
+                Enemies.on_collision(self, obj, side)
+            else:
+                if self.alive:
+                    self.die()
+        self.speed = -self.speed
+    
+    def update(self):
+        self.frame += 1
+
+        if not self.alive:
+            if self.move_side == 5:
+                Enemies.die(self)
+
+            if self.frame % 5 == 0:
+                self.move_side += 1 
+                self.image = self.die_images[self.move_side % 2]
+            return
+
+        if self.frame % 20 == 0:
+            self.move_side = (self.move_side + 1) % 2
+            self.image = self.images[self.move_side]
+        
+        if self.rect.left <=0:
+            self.speed = -self.speed
+
+        self.move(2*self.speed, 0)
 
 class VenusFlytrap(Enemies):
     def __init__(self, pos):
