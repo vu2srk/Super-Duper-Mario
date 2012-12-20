@@ -25,7 +25,13 @@ class World:
                 color = self.world.get_at((self.x, self.y))
                 
                 if color == (0, 0, 0, 255):
-                    Ground((self.x * SCALE, self.y * SCALE))
+                    l = False
+                    r = False
+                    if self.color_at(-1, 0) != (0, 0, 0, 255):
+                        l=True
+                    if self.color_at(1, 0) != (0, 0, 0, 255):
+                        r=True
+                    Ground((self.x * SCALE, self.y * SCALE), l, r)
             
                 if color == (127, 0, 55, 255):
                     Bush((self.x * SCALE, self.y * SCALE))
@@ -43,11 +49,11 @@ class World:
                 
                 if color == (255, 200, 0, 255):
                     p_type = "air"
-                    Ground((self.x * SCALE, self.y * SCALE), p_type)
+                    Ground((self.x * SCALE, self.y * SCALE), False, False, p_type)
 
                 if color == (0, 74, 127, 255):
                     p_type = "brick"
-                    Ground((self.x * SCALE, self.y * SCALE), p_type)
+                    Ground((self.x * SCALE, self.y * SCALE), False, False, p_type)
 
                 if color == (127, 51, 0, 255):
                     QuestionMark((self.x * SCALE, self.y * SCALE))
@@ -56,7 +62,13 @@ class World:
                     Coin((self.x * SCALE + DISPLACE, self.y * SCALE))
 
                 if color == (109, 127, 63, 255):
-                    Ground((self.x * SCALE, self.y * SCALE), "brick")
+                    l = False
+                    r = False    
+                    if self.color_at(-1, 0) != (109, 127, 63, 255):
+                        l=True
+                    if self.color_at(1, 0) != (109, 127, 63, 255):
+                        r=True
+                    Ground((self.x * SCALE, self.y * SCALE), l, r, "brick")
 
                 if color == (255, 233, 127, 255):
                     GrassHill((self.x * SCALE, self.y * 29))
@@ -71,7 +83,7 @@ class World:
                     Flagpole((self.x * SCALE , self.y * 10))
 
                 if color == (0, 255, 255, 255):
-                    BadMushroom((self.x * SCALE, self.y * SCALE))
+                    BadMushroom((self.x * SCALE, self.y * SCALE + 1))
  
     def color_at(self, dx, dy):
         try:

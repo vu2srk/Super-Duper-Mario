@@ -53,7 +53,10 @@ class Components(pygame.sprite.Sprite):
         for sprite_group in self.collision_groups:
             for sprite in sprite_group:
                 if sprite.rect.colliderect(self.rect):
-                    collided_side = which_side(dx, dy)
+                    if isinstance(sprite, Ground) and sprite.p_type != "air":
+                        collided_side = BOTTOM
+                    else:
+                        collided_side = which_side(dx, dy)
                     self.on_collision(sprite, collided_side)
 
     def on_collision(self, sprite, side):
@@ -101,9 +104,12 @@ class Mario(Components):
         if side == TOP:
             self.jump_speed = 0
         if side == BOTTOM:
-            self.jump_speed = 0
-            self.is_jumping = False
-            
+            if not isinstance(sprite, Enemies):
+                self.jump_speed = 0
+                self.is_jumping = False
+            elif isinstance(sprite, Enemies):
+                self.jump_speed = -4
+                self.is_jumping = True
 
     def jump(self):
         if not self.is_jumping:
@@ -154,7 +160,7 @@ class Mario(Components):
                 self.image = self.jumping_images[1]
             self.jump()
 
-        if self.jump_speed < 8:
+        if self.jump_speed < 10:
             self.jump_speed += self.accel
         if self.jump_speed > 3:
             self.is_jumping = True
@@ -182,14 +188,17 @@ class Mario(Components):
 
 class Ground(Components):
     
-    def __init__(self, pos, p_type="ground"):
+    def __init__(self, pos, l, r, p_type="ground"):
         Components.__init__(self, self.groups)
+        self.p_type = p_type
         if p_type == "air":
             self.image = load_image("platform-air.png")
         elif p_type == "brick":
             self.image = load_image("platform-brick.png")
         else:
             self.image = load_image("platform.png")
+        self.is_leftmost = l
+        self.is_rightmost = r
         self.rect = self.image.get_rect(topleft = pos)
 
 class QuestionMark(Components):
@@ -285,12 +294,18 @@ class BadMushroom(Enemies):
 
     def on_collision(self, obj, side):
         if isinstance(obj, Mario):
-            if side != BOTTOM and side != TOP:
+            if side != BOTTOM and side != TOP and obj.alive:
+                self.speed = -self.speed
                 Enemies.on_collision(self, obj, side)
             else:
                 if self.alive:
                     self.die()
-        self.speed = -self.speed
+            return
+        if side == TOP or side == BOTTOM:
+            if obj.is_leftmost or obj.is_rightmost:
+                self.speed = -self.speed
+        else:
+            self.speed = -self.speed
     
     def update(self):
         self.frame += 1

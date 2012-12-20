@@ -65,7 +65,7 @@ class SuperMario:
         Ground.groups = self.sprites, self.ground_group
         Bush.groups = self.sprites
         Cloud.groups = self.sprites, self.cloud_group
-        Pipe.groups = self.sprites, self.ground_group, self.pipe_group
+        Pipe.groups = self.sprites, self.ground_group
         QuestionMark.groups = self.sprites, self.ground_group
         Coin.groups = self.sprites, self.coin_group
         VenusFlytrap.groups = self.sprites, self.flytrap_group
@@ -87,7 +87,7 @@ class SuperMario:
         play_music(self.music)
 
         for sprite in self.bad_guys_group:
-            sprite.collides_with(self.pipe_group)
+            sprite.collides_with(self.ground_group)
             sprite.collides_with(self.player_group)
 
         #tell the component that it collides with everything in ground_group
@@ -102,14 +102,13 @@ class SuperMario:
         #initialize all groups to OrderedUpdates -- to ensure sprites get loaded in the order of adding
         self.sprites = pygame.sprite.OrderedUpdates()
         self.player_group = pygame.sprite.OrderedUpdates()
+        self.bad_guys_group = pygame.sprite.OrderedUpdates()
         self.ground_group = pygame.sprite.OrderedUpdates()
-        self.pipe_group = pygame.sprite.OrderedUpdates()
         self.cloud_group = pygame.sprite.OrderedUpdates()
         self.coin_group = pygame.sprite.OrderedUpdates()
         self.mushroom_group = pygame.sprite.OrderedUpdates()
         self.flag_group = pygame.sprite.OrderedUpdates()
         self.flytrap_group = pygame.sprite.OrderedUpdates()
-        self.bad_guys_group = pygame.sprite.OrderedUpdates()
     
     def start(self):
         while not self.quit:
